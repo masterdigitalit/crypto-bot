@@ -2,9 +2,17 @@ from aiogram import types, dispatcher
 from aiogram.types import CallbackQuery
 from create_bot import dp, bot
 from keyboard import registration as registration_kb, Start, confirmationButtonReg, confirmationButtonDailyReg
-from database import  getAllProjects, getUserRegistration, isProjectHasDaily, changeConfirmationState, createRegistrationTask, updateUserRegistration, getNameByCode, getProjectLink
+from database import  getAllProjects, getUserRegistration, isProjectHasDaily, changeConfirmationState, createTask, updateUserRegistration, getNameByCode, getProjectLink, getProjectPeriodicTime
 from hooks import checkAllRegIsDone
 import uuid
+
+
+
+from aiogram import Router, F, filters
+from aiogram.filters import Command
+
+router = Router()
+@router.callback_query(F.data[0:3] == 'reg')
 async def registration(callback_query: CallbackQuery):
     data = callback_query.data[4:]
     print(data)
@@ -61,9 +69,9 @@ async def registration(callback_query: CallbackQuery):
 
 
                 codes = [f'{uuid.uuid4()}'[0:20], f'{uuid.uuid4()}'[0:20]]
-                createRegistrationTask(code=codes[0], name=data[5:], type='periodic',
-                                       userId=callback_query.from_user.id)
-                createRegistrationTask(code=codes[1], name=data[5:], type='daily', userId=callback_query.from_user.id)
+                createTask(code=codes[0], name=data[5:], type='periodic',
+                                       userId=callback_query.from_user.id,  time=getProjectPeriodicTime(data[5:]))
+                createTask(code=codes[1], name=data[5:], type='daily', userId=callback_query.from_user.id)
                 await bot.edit_message_text(chat_id=callback_query.from_user.id,
                                             message_id=callback_query.message.message_id, text=f'{data[5:]}\n{getProjectLink(name)}')
                 await bot.edit_message_reply_markup(chat_id=callback_query.from_user.id,
@@ -71,7 +79,7 @@ async def registration(callback_query: CallbackQuery):
                                                     reply_markup=confirmationButtonDailyReg(codes, True))
             else:
                 code = f'{uuid.uuid4()}'
-                createRegistrationTask(code=code, name=data[5:], type='periodic', userId=callback_query.from_user.id)
+                createTask(code=code, name=data[5:], type='periodic', userId=callback_query.from_user.id, time=getProjectPeriodicTime(data[5:]))
                 await bot.edit_message_text(chat_id=callback_query.from_user.id,
                                             message_id=callback_query.message.message_id, text=f'{data[5:]}\n{getProjectLink(name)}')
                 await bot.edit_message_reply_markup(chat_id=callback_query.from_user.id,
@@ -82,9 +90,9 @@ async def registration(callback_query: CallbackQuery):
             if (isProjectHasDaily(data)[0]):
 
                 codes = [f'{uuid.uuid4()}'[0:20], f'{uuid.uuid4()}'[0:20]]
-                createRegistrationTask(code=codes[0], name=data, type='periodic',
-                                       userId=callback_query.from_user.id)
-                createRegistrationTask(code=codes[1], name=data, type='daily', userId=callback_query.from_user.id)
+                createTask(code=codes[0], name=data, type='periodic',
+                                       userId=callback_query.from_user.id, time=getProjectPeriodicTime(data))
+                createTask(code=codes[1], name=data, type='daily', userId=callback_query.from_user.id)
                 await bot.edit_message_text(chat_id=callback_query.from_user.id,
                                             message_id=callback_query.message.message_id, text=f'{data}\n{getProjectLink(name)}')
                 await bot.edit_message_reply_markup(chat_id=callback_query.from_user.id,
@@ -92,7 +100,7 @@ async def registration(callback_query: CallbackQuery):
                                                     reply_markup=confirmationButtonDailyReg(codes, False))
             else:
                 code = f'{uuid.uuid4()}'
-                createRegistrationTask(code=code, name=data, type='periodic', userId=callback_query.from_user.id)
+                createTask(code=code, name=data, type='periodic', userId=callback_query.from_user.id,  time=getProjectPeriodicTime(data))
                 await bot.edit_message_text(chat_id=callback_query.from_user.id,
                                             message_id=callback_query.message.message_id, text=f'{data}\n{getProjectLink(name)}')
                 await bot.edit_message_reply_markup(chat_id=callback_query.from_user.id,
@@ -194,8 +202,7 @@ async def registration(callback_query: CallbackQuery):
 
 
 
-def callbackQueryHandler(dp: dispatcher):
-    dp.register_callback_query_handler(registration, lambda c: c.data[0:3] == 'reg')
+
 
 
 

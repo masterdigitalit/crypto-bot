@@ -3,8 +3,7 @@ import os
 
 
 load_dotenv()
-def getFromEnv(key):
+def getKeyFromEnv(key):
     if os.getenv(key) == 'None':
         return
     return os.getenv(key)
-print(getFromEnv('TOKENs'))
